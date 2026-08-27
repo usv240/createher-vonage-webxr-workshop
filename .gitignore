@@ -138,3 +138,6 @@ dist
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 private.key
+
+# story recordings (keepsakes stay local)
+recordings/

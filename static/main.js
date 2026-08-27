@@ -3,7 +3,6 @@ import 'xrblocks/addons/simulator/SimulatorAddons.js';
 import RAPIER from '@dimforge/rapier3d-simd-compat';
 import * as xb from 'xrblocks';
 
-import { BallPit } from './BallPit.js';
 
 // ⌄⌄⌄ import Vonage Call Panel and Exit Button ⌄⌄⌄
 import { VonageAudioCall } from './VonageAudioCall.js';
@@ -30,8 +29,8 @@ options.reticles.enabled = false;
 options.controllers.performRaycastOnUpdate = false;
 options.xrButton = {
   ...options.xrButton,
-  startText: '<i id="xrlogo"></i> LET THE FUN BEGIN',
-  endText: '<i id="xrlogo"></i> MISSION COMPLETE',
+  startText: '<i id="xrlogo"></i> OPEN THE STORYBOOK',
+  endText: '<i id="xrlogo"></i> THE END',
 };
 options.physics.RAPIER = RAPIER;
 
@@ -58,7 +57,6 @@ async function getMicrophoneAccess() {
 
 // Initializes the scene, camera, xrRenderer, controls, and XR button.
 async function start() {
-  xb.add(new BallPit());
   // ⌄⌄⌄ add Vonage Call Panel and Exit Button ⌄⌄⌄
   xb.add(new VonageAudioCall());
   xb.add(new ExitPanel());
