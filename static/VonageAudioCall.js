@@ -178,6 +178,11 @@ export class VonageAudioCall extends xb.Script {
       });
       btn.onTriggered = () => this._sendToParent(item.text);
     }
+    grid.addRow({ weight: 0.1 }).addText({
+      text: 'Phone keys:  # next  ·  * back  ·  1 2 3 surprises',
+      fontColor: '#cdbfa3',
+      fontSize: 0.032,
+    });
     this.replyPanel.updateLayouts();
   }
 
@@ -257,6 +262,7 @@ export class VonageAudioCall extends xb.Script {
     if (!this.book || !this.tracker) return;
     const n = this.tracker.feed(words);
     this.book.highlightUpTo(n);
+    if (isFinal) this.book.setCaption(transcript);
     this.timeline.push({ t: Date.now(), type: 'words', data: { n } });
     // keywords -> illustration comes alive
     const kw = this.book.page.keywords || {};
@@ -407,6 +413,11 @@ export class VonageAudioCall extends xb.Script {
       const masked = String(from).replace(/\d(?=(?:\D*\d){4})/g, '*');
       this._setStatus(`${this.story?.parentName || 'Someone'} is calling (${masked})`);
       this.updateControlRow('INCOMING');
+      // gentle ring: chime + let the landing page know
+      this._beep('twinkle');
+      window.dispatchEvent(new Event('ouac:ring'));
+      // Little ones can't hit a button: auto-answer if the caregiver enabled it
+      if (window.OUAC?.autoAnswer?.()) setTimeout(() => this.callId === callId && this._onAnswer(), 1200);
     });
     this.client.on('legStatusUpdate', (callId, legId, status) => console.log('leg status:', status));
     this.client.on('callInviteCancel', () => {

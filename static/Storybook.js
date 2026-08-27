@@ -87,6 +87,12 @@ export class Storybook extends THREE.Group {
     this.draw();
   }
 
+  // Live caption of what the parent just said (accessibility for hard-of-hearing children)
+  setCaption(text) {
+    this.caption = String(text || '').slice(-90);
+    this.draw();
+  }
+
   update(dt) {
     this.time += dt;
     let dirty = false;
@@ -140,6 +146,18 @@ export class Storybook extends THREE.Group {
     c.font = 'italic 34px Georgia, serif';
     c.fillStyle = '#6b5b45';
     c.fillText(this.banner, 70, H - 50);
+
+    // caption strip (what the parent just said), right page bottom
+    if (this.caption) {
+      c.fillStyle = 'rgba(26,26,46,0.85)';
+      this.roundRect(c, W / 2 + 60, H - 150, W / 2 - 120, 70, 14);
+      c.fill();
+      c.fillStyle = '#fff7e6';
+      c.font = '30px system-ui, sans-serif';
+      c.textBaseline = 'middle';
+      c.fillText('“' + this.caption + '”', W / 2 + 80, H - 115);
+      c.textBaseline = 'top';
+    }
 
     this.texture.needsUpdate = true;
   }

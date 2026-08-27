@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Once Upon a Call — Parent's card</title>
+  <style>
+    /* The parent has no screen. This is the whole interface they get: a wallet-sized card. */
+    body { margin: 0; background: #e9e4d8; font-family: Georgia, serif; color: #1a1a2e; display: grid; place-items: center; min-height: 100vh; }
+    .sheet { padding: 24px; }
+    .card {
+      width: 3.5in; height: 2in; box-sizing: border-box; padding: 0.18in 0.22in;
+      background: #fff7e6; border: 1px solid #b39b6a; border-radius: 10px;
+      display: grid; grid-template-rows: auto auto 1fr auto; gap: 4px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.12);
+    }
+    .title { font-size: 13px; letter-spacing: 1px; text-transform: uppercase; color: #6b5b45; margin: 0; }
+    .phone { font-size: 24px; font-weight: 700; margin: 0; color: #a0522d; }
+    .keys { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; font-size: 9px; text-align: center; font-family: system-ui, sans-serif; }
+    .keys b { display: block; font-size: 15px; background: #1a1a2e; color: #ffd54a; border-radius: 6px; padding: 2px 0 1px; margin-bottom: 2px; }
+    .foot { font-size: 9px; color: #6b5b45; margin: 0; font-family: system-ui, sans-serif; }
+    .print { margin-top: 18px; text-align: center; font-family: system-ui, sans-serif; }
+    .print button { font: 15px system-ui; padding: 10px 18px; border-radius: 8px; border: 0; background: #1a1a2e; color: #ffd54a; cursor: pointer; }
+    .print p { color: #6b5b45; font-size: 13px; }
+    @media print { body { background: #fff } .print { display: none } .card { box-shadow: none } }
+  </style>
+</head>
+<body>
+  <div class="sheet">
+    <div class="card">
+      <p class="title">Once Upon a Call · <span id="child">Maya</span>'s storybook</p>
+      <p class="phone" id="phone">…</p>
+      <div class="keys">
+        <div><b>#</b>next page</div>
+        <div><b>*</b>back</div>
+        <div><b>1</b>roar</div>
+        <div><b>2</b>twinkle</div>
+        <div><b>3</b>moon</div>
+      </div>
+      <p class="foot">Call at bedtime · read slowly · press # when you reach the end of a page · your PIN: ____</p>
+    </div>
+    <div class="print">
+      <button onclick="window.print()">Print card</button>
+      <p>Wallet-sized (3.5 × 2 in). Give it to the parent — it's all they need.</p>
+    </div>
+  </div>
+  <script>
+    fetch('/api/info').then(r => r.json()).then(i => {
+      document.getElementById('phone').textContent = i.phoneFormatted || i.phone || '';
+      document.getElementById('child').textContent = i.childName || 'your child';
+    }).catch(() => {});
+  </script>
+</body>
+</html>

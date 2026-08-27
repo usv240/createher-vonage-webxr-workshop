@@ -1,0 +1,83 @@
+/* Once Upon a Call — landing overlay.
+   Principles: one job per screen (open the book), a warm night palette that won't wake a child,
+   big type + big targets, and a live status so nobody wonders "is it working?". */
+:root {
+  --ink: #fff7e6;
+  --muted: #cdbfa3;
+  --amber: #ffd54a;
+  --night: rgba(14, 18, 44, 0.86);
+  --card: rgba(255, 247, 230, 0.08);
+  --border: rgba(255, 213, 74, 0.25);
+}
+
+#landing {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: grid;
+  grid-template-rows: auto auto auto auto auto 1fr;
+  gap: 14px;
+  padding: 28px clamp(16px, 4vw, 48px) 120px;
+  max-width: 720px;
+  margin: 0 auto;
+  color: var(--ink);
+  font-family: Georgia, 'Times New Roman', serif;
+  pointer-events: none;
+  overflow: auto;
+}
+#landing.hidden { display: none; }
+#landing a, #landing label, #landing input { pointer-events: auto; }
+
+.hero { text-align: center; }
+.brand { display: flex; align-items: center; justify-content: center; gap: 12px; }
+.moon {
+  width: 34px; height: 34px; border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #fff3b0, #f2c94c 70%);
+  box-shadow: 0 0 24px rgba(255, 213, 74, 0.55);
+}
+h1 { font-size: clamp(30px, 6vw, 44px); margin: 0; font-weight: 600; letter-spacing: 0.3px; }
+.tagline { margin: 6px 0 12px; font-size: 18px; color: var(--muted); }
+.tagline em { color: var(--amber); font-style: normal; }
+
+.status {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 6px 14px; border-radius: 999px; font-size: 14px;
+  background: var(--card); border: 1px solid var(--border); font-family: system-ui, sans-serif;
+}
+.status .dot { width: 9px; height: 9px; border-radius: 50%; background: #9e9e9e; }
+.status.waiting .dot { background: #64b5f6; animation: pulse 2s infinite; }
+.status.ringing .dot { background: var(--amber); animation: pulse 0.6s infinite; }
+.status.live .dot { background: #66bb6a; }
+.status.saved .dot { background: #ba68c8; }
+.status.error .dot { background: #ef5350; }
+@keyframes pulse { 0%, 100% { opacity: 1 } 50% { opacity: 0.35 } }
+
+.card {
+  background: var(--night); border: 1px solid var(--border); border-radius: 18px;
+  padding: 16px 20px; backdrop-filter: blur(6px);
+}
+.label { margin: 0 0 4px; font-size: 13px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); font-family: system-ui, sans-serif; }
+.phone { margin: 0; font-size: clamp(30px, 7vw, 42px); color: var(--amber); font-variant-numeric: tabular-nums; }
+.hint { margin: 6px 0 0; color: var(--muted); font-size: 15px; }
+
+.keys { list-style: none; margin: 8px 0 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; }
+.keys li { display: flex; align-items: center; gap: 10px; font-size: 15px; }
+kbd {
+  display: inline-grid; place-items: center; width: 40px; height: 40px; border-radius: 10px;
+  background: #fff7e6; color: #1a1a2e; font: 700 20px/1 system-ui, sans-serif;
+  box-shadow: 0 3px 0 #b39b6a;
+}
+
+.steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.steps div { display: flex; gap: 10px; align-items: flex-start; font-size: 14px; color: var(--ink); }
+.steps b { flex: none; width: 26px; height: 26px; border-radius: 50%; background: var(--amber); color: #1a1a2e; display: grid; place-items: center; font-family: system-ui, sans-serif; }
+
+.links { display: flex; flex-wrap: wrap; gap: 14px 22px; justify-content: center; font-family: system-ui, sans-serif; font-size: 14px; }
+.links a { color: var(--amber); }
+.toggle { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); cursor: pointer; }
+.foot { text-align: center; color: var(--muted); font-size: 12px; font-family: system-ui, sans-serif; margin: 0; }
+
+@media (max-width: 560px) {
+  .steps { grid-template-columns: 1fr; }
+  #landing { padding-bottom: 140px; }
+}

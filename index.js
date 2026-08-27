@@ -339,6 +339,19 @@ app.post('/api/say', async (req, res) => {
 
 // ---------- misc API ----------
 app.get('/api/story', (req, res) => res.json(story));
+app.get('/api/info', (req, res) => {
+  const d = String(vonageNumber || '').replace(/\D/g, '');
+  const phoneFormatted =
+    d.length === 11 && d.startsWith('1') ? `+1 (${d.slice(1, 4)}) ${d.slice(4, 7)}-${d.slice(7)}` : d ? `+${d}` : '';
+  res.json({
+    phone: d,
+    phoneFormatted,
+    title: story.title,
+    childName: story.childName,
+    parentName: story.parentName,
+    pinRequired: !!FAMILY_PIN && APPROVED_NUMBERS.length > 0,
+  });
+});
 app.get('/api/state', (req, res) => res.json({ ...publicState(), parentLeg: session.parentLeg }));
 app.get('/api/asr-key', (req, res) => res.json({ key: process.env.DEEPGRAM_API_KEY || null }));
 app.get('/api/replay/latest', (req, res) => {

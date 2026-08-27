@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Once Upon a Call — Saved stories</title>
+  <style>
+    body { margin: 0; background: #0e122c; color: #fff7e6; font-family: Georgia, serif; }
+    main { max-width: 640px; margin: 0 auto; padding: 32px 20px; }
+    h1 { font-weight: 600; margin: 0 0 4px; }
+    .sub { color: #cdbfa3; margin: 0 0 24px; }
+    .story { background: rgba(255,247,230,0.08); border: 1px solid rgba(255,213,74,0.25); border-radius: 16px; padding: 16px 18px; margin-bottom: 14px; }
+    .story h2 { font-size: 18px; margin: 0 0 4px; }
+    .meta { color: #cdbfa3; font-size: 13px; font-family: system-ui, sans-serif; margin: 0 0 10px; }
+    audio { width: 100%; }
+    .empty { color: #cdbfa3; text-align: center; padding: 40px 0; }
+    a { color: #ffd54a; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Saved stories</h1>
+    <p class="sub">Every story read over the phone is kept here for the nights they can't call. <a href="/">← Back to the storybook</a></p>
+    <div id="list"><p class="empty">Loading…</p></div>
+  </main>
+  <script>
+    async function load() {
+      const list = document.getElementById('list');
+      try {
+        const [recs, info] = await Promise.all([fetch('/api/recordings').then(r => r.json()), fetch('/api/info').then(r => r.json())]);
+        if (!recs.length) { list.innerHTML = '<p class="empty">No stories saved yet. The first one appears here after the parent hangs up.</p>'; return; }
+        list.innerHTML = recs.slice().reverse().map((r, i) => {
+          const when = r.start ? new Date(r.start).toLocaleString() : 'Unknown time';
+          const mins = r.start && r.end ? Math.max(1, Math.round((new Date(r.end) - new Date(r.start)) / 60000)) : null;
+          return `<div class="story">
+            <h2>${info.title || 'Story'} — read by ${info.parentName || 'parent'}</h2>
+            <p class="meta">${when}${mins ? ` · ${mins} min` : ''} · ${r.events} moments captured</p>
+            ${r.url ? `<audio controls preload="none" src="${r.url}"></audio>` : '<p class="meta">Recording is still downloading…</p>'}
+          </div>`;
+        }).join('');
+      } catch (e) {
+        list.innerHTML = '<p class="empty">Could not load stories.</p>';
+      }
+    }
+    load();
+  </script>
+</body>
+</html>

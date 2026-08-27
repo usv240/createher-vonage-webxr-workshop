@@ -5,10 +5,12 @@
   <title>Once Upon a Call</title>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <meta name="description" content="A live AR bedtime story, read over any phone." />
   <link type="text/css" rel="stylesheet" href="./demo.css" />
+  <link type="text/css" rel="stylesheet" href="./landing.css" />
   <!-- ⌄⌄⌄ Load the Vonage Client SDK ⌄⌄⌄ -->
-  <script src="/socket.io/socket.io.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@vonage/client-sdk@latest/dist/vonageClientSDK.min.js"></script>
+  <script src="/socket.io/socket.io.js"></script>
   <script>
     window.litDisableBundleWarning = true;
   </script>
@@ -35,6 +37,52 @@
 
 <body>
   <div class="background-image" style="background-image: url('./background.webp')"></div>
+
+  <!-- Landing overlay: shown until the storybook is opened -->
+  <main id="landing" aria-live="polite">
+    <header class="hero">
+      <div class="brand">
+        <span class="moon" aria-hidden="true"></span>
+        <h1>Once Upon a Call</h1>
+      </div>
+      <p class="tagline">A live bedtime story, read over <em>any</em> phone.</p>
+      <div id="status" class="status waiting">
+        <span class="dot"></span><span id="status-text">Connecting…</span>
+      </div>
+    </header>
+
+    <section class="card call-card">
+      <p class="label">The parent calls</p>
+      <p id="phone" class="phone">…</p>
+      <p class="hint">From any phone — landline, payphone, flip phone. No app, no internet.</p>
+    </section>
+
+    <section class="card keys-card">
+      <p class="label">Their keypad is the remote</p>
+      <ul class="keys">
+        <li><kbd>#</kbd><span>Next page</span></li>
+        <li><kbd>*</kbd><span>Back a page</span></li>
+        <li><kbd>1</kbd><span>Dragon roars</span></li>
+        <li><kbd>2</kbd><span>Stars twinkle</span></li>
+        <li><kbd>3</kbd><span>Moon hums</span></li>
+      </ul>
+    </section>
+
+    <section class="steps">
+      <div><b>1</b><span>Open the storybook below</span></div>
+      <div><b>2</b><span>Parent dials the number</span></div>
+      <div><b>3</b><span>Answer — they appear beside the book</span></div>
+    </section>
+
+    <nav class="links">
+      <a href="/parent-card.html" target="_blank">🖨 Print the parent's card</a>
+      <a href="/caregiver.html" target="_blank">📚 Saved stories</a>
+      <label class="toggle"><input type="checkbox" id="autoanswer" /> Auto‑answer (for little ones)</label>
+    </nav>
+    <p class="foot">Built with the Vonage Voice API + XR Blocks · DIALED IN Builder Challenge</p>
+  </main>
+
+  <script src="./landing.js"></script>
   <script type="module" src="./main.js"></script>
 </body>
 
