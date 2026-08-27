@@ -5,10 +5,10 @@ import { Keyboard } from 'xrblocks/addons/virtualkeyboard/Keyboard.js';
 
 // ⌄⌄⌄ Set Quick Replies ⌄⌄⌄
 const QUICK_REPLIES = [
-  { label: "Meeting", message: "In a meeting, I'll call you back." },
-  { label: "Talk Later", message: "Can't talk right now. I'll talk later." },
-  { label: "OMW!", message: "On my way! Talk soon." },
-  { label: "5 Mins", message: "Call you back in 5 minutes." },
+  { label: 'Hug', message: 'Maya just sent you a big hug.' },
+  { label: 'Again!', message: 'Maya says: read that page again, please!' },
+  { label: 'One more', message: 'Maya says: one more page, please!' },
+  { label: 'Night', message: 'Maya says: goodnight, I love you.' },
 ];
 export class VonageAudioCall extends xb.Script {
   // ⌄⌄⌄ Create constructor ⌄⌄⌄
@@ -464,6 +464,21 @@ export class VonageAudioCall extends xb.Script {
     console.log("Vonage init!", this.client);
     this.setupVonageListeners();
     this.connectToVonage(this.userName);
+    this._connectStorySocket();
+  }
+
+  // ⌄⌄⌄ Storybook events from the server (keypad, page, recording) ⌄⌄⌄
+  _connectStorySocket() {
+    if (typeof io === 'undefined') return console.warn('socket.io client not loaded');
+    this.socket = io();
+    this.socket.on('state', (s) => {
+      console.log('STORY state', s);
+      if (this.statusText) this.statusText.text = `Page ${s.page + 1} / ${s.totalPages}`;
+    });
+    this.socket.on('keypad', ({ digit }) => console.log('KEYPAD from parent phone:', digit));
+    this.socket.on('effect', ({ key }) => console.log('EFFECT', key));
+    this.socket.on('recording', ({ count }) => console.log('Story saved. Recordings:', count));
+    this.socket.on('call:ended', () => console.log('Parent hung up'));
   }
 
   // the update() method runs per frame. This allows the 3D Avatar to face the user as they move around

@@ -1,0 +1,31 @@
+{
+  "title": "The Little Dragon Who Couldn't Sleep",
+  "childName": "Maya",
+  "pages": [
+    {
+      "text": "Once upon a time, in a cozy cave on top of a hill, lived a little dragon named Pip.",
+      "scene": "cave",
+      "keywords": { "dragon": "dragon-wiggle", "cave": "cave-glow" }
+    },
+    {
+      "text": "Every night, Pip counted the stars. One, two, three... but Pip could never fall asleep.",
+      "scene": "stars",
+      "keywords": { "stars": "stars-twinkle", "asleep": "yawn" }
+    },
+    {
+      "text": "So Pip flew up, up, up into the sky, and asked the moon for a lullaby.",
+      "scene": "moon",
+      "keywords": { "flew": "dragon-fly", "moon": "moon-smile" }
+    },
+    {
+      "text": "The moon sang softly, and Pip's eyes grew heavy. Goodnight, little dragon. Goodnight, Maya.",
+      "scene": "sleep",
+      "keywords": { "goodnight": "lights-dim", "heavy": "eyes-close" }
+    }
+  ],
+  "effects": {
+    "1": { "label": "Dragon roar", "sound": "roar" },
+    "2": { "label": "Twinkle", "sound": "twinkle" },
+    "3": { "label": "Moon hum", "sound": "hum" }
+  }
+}
