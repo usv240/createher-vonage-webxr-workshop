@@ -14,6 +14,7 @@
     .then((r) => r.json())
     .then((info) => {
       $('phone').textContent = info.phoneFormatted || info.phone || 'number not set';
+      $('phone-mini').textContent = info.phoneFormatted || info.phone || '';
       document.title = `Once Upon a Call — ${info.childName}'s storybook`;
     })
     .catch(() => ($('phone').textContent = 'number not set'));
@@ -40,6 +41,16 @@
     });
     socket.on('recording', () => setStatus('saved', "Tonight's story is saved"));
   }
+
+  // Slim top bar once the scene is live (simulator starts immediately on laptops)
+  const toggle = $('toggle-landing');
+  function setCompact(on) {
+    landing.classList.toggle('compact', on);
+    toggle.textContent = on ? '▾ Show guide' : '▴ Hide guide';
+  }
+  toggle.addEventListener('click', () => setCompact(!landing.classList.contains('compact')));
+  setTimeout(() => setCompact(true), 5000);              // give first-time viewers a look, then get out of the way
+  window.addEventListener('ouac:ring', () => setCompact(true));
 
   // XR Blocks injects its own "OPEN THE STORYBOOK" button; hide the landing when it's pressed.
   document.addEventListener('click', (e) => {

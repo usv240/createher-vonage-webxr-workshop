@@ -81,3 +81,25 @@ kbd {
   .steps { grid-template-columns: 1fr; }
   #landing { padding-bottom: 140px; }
 }
+
+/* Compact mode: once the storybook scene is live, get out of the way (slim top bar). */
+#landing.compact {
+  grid-template-rows: auto;
+  gap: 0;
+  padding: 10px 16px;
+  max-width: none;
+  inset: 0 0 auto 0;
+  background: linear-gradient(rgba(14, 18, 44, 0.9), rgba(14, 18, 44, 0));
+  overflow: visible;
+}
+#landing.compact .hero { display: flex; align-items: center; gap: 18px; text-align: left; flex-wrap: wrap; }
+#landing.compact h1 { font-size: 22px; }
+#landing.compact .moon { width: 22px; height: 22px; }
+#landing.compact .tagline { display: none; }
+#landing.compact .call-card, #landing.compact .keys-card, #landing.compact .steps, #landing.compact .foot { display: none; }
+#landing.compact .links { justify-content: flex-start; gap: 10px 18px; margin-top: 6px; font-size: 13px; }
+#landing.compact .mini { display: inline-flex; align-items: center; gap: 10px; color: var(--muted); font-family: system-ui, sans-serif; font-size: 13px; }
+#landing.compact .mini b { color: var(--amber); font-size: 16px; font-family: Georgia, serif; }
+#landing.compact .mini kbd { width: 22px; height: 22px; font-size: 12px; border-radius: 6px; box-shadow: 0 2px 0 #b39b6a; }
+.mini { display: none; }
+#toggle-landing { pointer-events: auto; background: none; border: 1px solid var(--border); color: var(--muted); border-radius: 999px; padding: 4px 10px; font: 12px system-ui, sans-serif; text-transform: none; }
