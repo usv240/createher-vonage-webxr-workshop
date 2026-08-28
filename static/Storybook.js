@@ -12,7 +12,7 @@ import * as THREE from 'three';
 
 const W = 1600;   // canvas px (two pages side by side)
 const H = 1000;
-const PAGE_W = 0.9; // metres
+const PAGE_W = 1.15; // metres
 const PAGE_H = PAGE_W * (H / W);
 
 export class Storybook extends THREE.Group {

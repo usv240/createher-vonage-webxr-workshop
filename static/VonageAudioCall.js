@@ -58,6 +58,7 @@ export class VonageAudioCall extends xb.Script {
   // ===================== lifecycle =====================
   async init() {
     console.log('Once Upon a Call — init');
+    this._addLights();
     try {
       this.story = await (await fetch('/api/story')).json();
     } catch (e) {
@@ -85,11 +86,20 @@ export class VonageAudioCall extends xb.Script {
     head.lookAt(targetX, this._headWorld.y, targetZ);
   }
 
+  _addLights() {
+    // The ball-pit demo used to light the scene; a bedtime scene needs its own warm light.
+    const hemi = new THREE.HemisphereLight(0xfff4e0, 0x3a2f4a, 1.1);
+    const key = new THREE.DirectionalLight(0xffe9c4, 1.4);
+    key.position.set(0.6, 1.8, 1.2);
+    this.add(hemi);
+    this.add(key);
+  }
+
   // ===================== panels =====================
   _createLobbyPanel() {
     if (this.panel) return;
     this.panel = new xb.SpatialPanel({ backgroundColor: '#1a1a2ecc', width: 1.0, height: 0.42 });
-    this.panel.position.set(0, xb.user.height + 0.35, -xb.user.objectDistance);
+    this.panel.position.set(0, xb.user.height + 0.55, -xb.user.objectDistance - 0.2);
     this.add(this.panel);
     this.grid = this.panel.addGrid();
     this.grid.addRow({ weight: 0.35 }).addText({
@@ -162,7 +172,7 @@ export class VonageAudioCall extends xb.Script {
   _createReplyPanel() {
     if (this.replyPanel) return;
     this.replyPanel = new xb.SpatialPanel({ backgroundColor: '#1a1a2ecc', width: 0.55, height: 0.62 });
-    this.replyPanel.position.set(0.85, xb.user.height - 0.15, -xb.user.objectDistance);
+    this.replyPanel.position.set(1.05, xb.user.height - 0.05, -xb.user.objectDistance);
     this.add(this.replyPanel);
     const grid = this.replyPanel.addGrid();
     grid.addRow({ weight: 0.14 }).addText({
@@ -199,7 +209,7 @@ export class VonageAudioCall extends xb.Script {
     if (this.puppetHead) return;
     const head = new THREE.Group();
     // Parent sits to the left of the book, a little lower — "beside the bed"
-    head.position.set(-0.75, xb.user.height - 0.1, -xb.user.objectDistance + 0.1);
+    head.position.set(-0.95, xb.user.height - 0.05, -xb.user.objectDistance + 0.1);
     const faceMesh = new THREE.Mesh(
       new THREE.SphereGeometry(0.11, 32, 24),
       new THREE.MeshStandardMaterial({ color: 0xf2d4b3, roughness: 0.6, metalness: 0.05 })
@@ -239,7 +249,7 @@ export class VonageAudioCall extends xb.Script {
   _createBook() {
     if (this.book || !this.story) return;
     this.book = new Storybook(this.story);
-    this.book.position.set(0.05, xb.user.height - 0.2, -xb.user.objectDistance);
+    this.book.position.set(0, xb.user.height - 0.02, -xb.user.objectDistance);
     this.book.rotation.x = -0.15;
     this.add(this.book);
     this.tracker = new ReadingTracker(this.book.words);
@@ -284,6 +294,25 @@ export class VonageAudioCall extends xb.Script {
     this.book.trigger(map[fx.sound] || 'dragon-wiggle', 2.5);
     this._beep(fx.sound);
     this.book.setBanner(`${this.story.parentName || 'Parent'} pressed ${key}: ${fx.label}`);
+  }
+
+  // Phone audio is quiet in a browser tab; route it through a gain stage (?gain=2.5 to adjust)
+  _boostAudio(audioElement, stream) {
+    try {
+      const gainValue = parseFloat(new URLSearchParams(location.search).get('gain') || '2');
+      this.audioCtx = this.audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+      const ctx = this.audioCtx;
+      if (ctx.state === 'suspended') ctx.resume();
+      const src = ctx.createMediaStreamSource(stream);
+      const gain = ctx.createGain();
+      gain.gain.value = gainValue;
+      src.connect(gain).connect(ctx.destination);
+      audioElement.muted = true; // avoid double playback
+      this._boost = { src, gain };
+      console.log('Audio boost x' + gainValue);
+    } catch (e) {
+      console.warn('Audio boost unavailable', e);
+    }
   }
 
   // tiny synthesized sounds (no assets needed)
@@ -364,6 +393,7 @@ export class VonageAudioCall extends xb.Script {
         const audioElement = this.client.getAudioOutputElement();
         const remoteStream = audioElement?.srcObject;
         if (remoteStream) {
+          this._boostAudio(audioElement, remoteStream);
           this._createAvatar(remoteStream);
           this.listener = new StoryListener({
             onWords: (w, f, tr) => this._onSpokenWords(w, f, tr),
@@ -389,6 +419,7 @@ export class VonageAudioCall extends xb.Script {
   }
 
   async _endCallUI() {
+    try { this._boost?.src.disconnect(); this._boost = null; } catch (e) {}
     this.listener?.stop();
     this.listener = null;
     this._removeAvatar();
