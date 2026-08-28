@@ -115,11 +115,12 @@ export class VonageAudioCall extends xb.Script {
     this.controlRow = this.grid.addRow({ weight: 0.3 });
 
     if (state === 'IDLE') {
+      const hasStory = this.state.recordings > 0;
       const replayBtn = this.controlRow.addCol({ weight: 1 }).addTextButton({
-        text: this.state.recordings > 0 ? 'Replay last story' : 'No saved stories yet',
-        fontSize: 0.3,
-        backgroundColor: this.state.recordings > 0 ? '#3b3b80' : '#2b2b2b',
-        fontColor: '#ffffff',
+        text: hasStory ? 'Replay' : 'Waiting…',
+        fontSize: 0.22,
+        backgroundColor: hasStory ? '#3b3b80' : '#2b2b3a',
+        fontColor: hasStory ? '#ffffff' : '#8a8aa0',
       });
       replayBtn.onTriggered = () => this._startReplay();
     } else if (state === 'INCOMING') {
