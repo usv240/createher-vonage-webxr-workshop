@@ -46,10 +46,10 @@
   const toggle = $('toggle-landing');
   function setCompact(on) {
     landing.classList.toggle('compact', on);
-    toggle.textContent = on ? '▾ Show guide' : '▴ Hide guide';
+    toggle.textContent = on ? '▾ Guide' : '▴ Close';
   }
   toggle.addEventListener('click', () => setCompact(!landing.classList.contains('compact')));
-  setTimeout(() => setCompact(true), 5000);              // give first-time viewers a look, then get out of the way
+  setTimeout(() => setCompact(true), 6000);              // give first-time viewers a look, then get out of the way
   window.addEventListener('ouac:ring', () => setCompact(true));
 
   // XR Blocks injects its own "OPEN THE STORYBOOK" button; hide the landing when it's pressed.

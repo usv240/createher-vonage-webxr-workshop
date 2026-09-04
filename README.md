@@ -82,6 +82,9 @@ CAREGIVER_NUMBER=17045551234                # SMS when a story is saved
 DEEPGRAM_API_KEY=...                        # live word highlighting
 ```
 
+Handy URL parameters: `?gain=3` makes the parent's voice louder (`?gain=1` turns the boost off),
+`?dist=0.9` brings the storybook closer, which helps when filming on a large monitor.
+
 ### Using it
 1. Open the app, allow the microphone, click **OPEN THE STORYBOOK** (headset: enters AR; laptop: XR Blocks simulator).
 2. From any phone, call the Vonage number. Answer in the app.
@@ -102,6 +105,23 @@ static/story.json         The story (pages, keyword → effect map, keypad effec
 static/main.js            XR Blocks bootstrap
 pages/index.html          Import map (XR Blocks pinned), Client SDK, socket.io
 ```
+
+## Testing the overlay
+
+The landing overlay sits on top of a live 3D scene, so its layout is checked in a real browser
+rather than by eye. `test/layout.test.js` loads the page at 390px, 1280px, 1920px and 3840px
+wide, in both the expanded-guide and compact-top-bar states, and fails if any two blocks overlap,
+anything is `position: fixed`, anything overflows the viewport, or the compact bar grows past a
+thin strip.
+
+```bash
+npm start                 # in one terminal
+npm i -D puppeteer-core   # drives the Chrome already on your machine, no download
+node test/layout.test.js http://localhost:3000/
+```
+
+It writes `expanded.png` / `compact.png` for a visual check. Edit `CHROME` at the top of the
+file if your Chrome lives somewhere else.
 
 ## Safety & privacy
 - Only approved numbers (or callers with the family PIN) can enter the child's room.

@@ -1,21 +1,23 @@
 /* Once Upon a Call — landing overlay.
    Principles: one job per screen, a warm night palette, fluid type/spacing (rem + clamp + vw),
-   flex-wrap everywhere so nothing overlaps from a 360px phone to a 4K monitor. */
+   flex-wrap everywhere so nothing overlaps from a 360px phone to a 4K monitor.
+   The markup deliberately avoids <header>/<nav>: demo.css (XR Blocks template) styles a bare
+   <header> as position:fixed, which used to pull this overlay apart. */
 :root {
   --ink: #fff7e6;
   --muted: #cdbfa3;
   --amber: #ffd54a;
-  --night: rgba(14, 18, 44, 0.86);
+  --night: rgba(14, 18, 44, 0.88);
   --card: rgba(255, 247, 230, 0.08);
   --border: rgba(255, 213, 74, 0.25);
   --gap: clamp(0.5rem, 1.2vw, 1rem);
   --pad: clamp(0.75rem, 2.5vw, 2rem);
   --radius: clamp(0.75rem, 1.5vw, 1.25rem);
-  --fs-sm: clamp(0.75rem, 0.7rem + 0.3vw, 0.9rem);
-  --fs-md: clamp(0.9rem, 0.8rem + 0.4vw, 1.1rem);
-  --fs-lg: clamp(1.1rem, 0.9rem + 0.8vw, 1.5rem);
-  --fs-xl: clamp(1.6rem, 1rem + 2.2vw, 2.75rem);
-  --fs-phone: clamp(1.6rem, 1rem + 3vw, 3rem);
+  --fs-sm: clamp(0.75rem, 0.7rem + 0.3vw, 0.95rem);
+  --fs-md: clamp(0.9rem, 0.8rem + 0.4vw, 1.15rem);
+  --fs-lg: clamp(1.1rem, 0.9rem + 0.8vw, 1.6rem);
+  --fs-xl: clamp(1.6rem, 1rem + 2.2vw, 3rem);
+  --fs-phone: clamp(1.6rem, 1rem + 3vw, 3.25rem);
 }
 
 #landing {
@@ -24,20 +26,23 @@
   z-index: 3;
   display: flex;
   flex-direction: column;
+  align-items: stretch;
   gap: var(--gap);
   padding: var(--pad) var(--pad) calc(var(--pad) + 6rem);
-  width: min(100%, 46rem);
-  margin: 0 auto;
+  width: 100%;
   box-sizing: border-box;
   color: var(--ink);
   font-family: Georgia, 'Times New Roman', serif;
   pointer-events: none;
   overflow: auto;
 }
+#landing * { box-sizing: border-box; }
+#landing > * { width: min(100%, 48rem); margin-inline: auto; }
+#landing.compact > * { width: 100%; }
 #landing.hidden { display: none; }
 #landing a, #landing label, #landing input, #landing button { pointer-events: auto; }
 
-/* ---------- full guide ---------- */
+/* ---------- expanded guide ---------- */
 .hero { display: flex; flex-direction: column; align-items: center; gap: 0.4rem; text-align: center; }
 .brand { display: flex; align-items: center; gap: 0.6rem; }
 .moon {
@@ -50,9 +55,10 @@ h1 { font-size: var(--fs-xl); margin: 0; font-weight: 600; letter-spacing: 0.01e
 .tagline em { color: var(--amber); font-style: normal; }
 
 .status {
-  display: inline-flex; align-items: center; gap: 0.5em; max-width: 100%;
-  padding: 0.35em 0.9em; border-radius: 999px; font-size: var(--fs-sm); white-space: nowrap;
-  overflow: hidden; text-overflow: ellipsis;
+  display: inline-flex; align-items: center; gap: 0.5em;
+  flex: 0 1 auto; min-width: 0; max-width: 100%;
+  padding: 0.35em 0.9em; border-radius: 999px; font-size: var(--fs-sm);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   background: var(--card); border: 1px solid var(--border); font-family: system-ui, sans-serif;
 }
 .status .dot { flex: none; width: 0.6em; height: 0.6em; border-radius: 50%; background: #9e9e9e; }
@@ -62,6 +68,13 @@ h1 { font-size: var(--fs-xl); margin: 0; font-weight: 600; letter-spacing: 0.01e
 .status.saved .dot { background: #ba68c8; }
 .status.error .dot { background: #ef5350; }
 @keyframes pulse { 0%, 100% { opacity: 1 } 50% { opacity: 0.35 } }
+
+#toggle-landing {
+  flex: none; background: rgba(14, 18, 44, 0.6); border: 1px solid var(--border); color: var(--muted);
+  border-radius: 999px; padding: 0.3em 0.9em; font: var(--fs-sm) system-ui, sans-serif;
+  text-transform: none; white-space: nowrap; cursor: pointer;
+}
+#toggle-landing:hover { color: var(--ink); border-color: var(--amber); }
 
 .card {
   background: var(--night); border: 1px solid var(--border); border-radius: var(--radius);
@@ -80,52 +93,63 @@ kbd {
 }
 
 .steps { display: flex; flex-wrap: wrap; gap: var(--gap); }
-.steps div { flex: 1 1 12rem; display: flex; gap: 0.6em; align-items: flex-start; font-size: var(--fs-md); }
-.steps b { flex: none; width: 1.7em; height: 1.7em; border-radius: 50%; background: var(--amber); color: #1a1a2e; display: grid; place-items: center; font-family: system-ui, sans-serif; }
+.steps > div { flex: 1 1 12rem; display: flex; gap: 0.6em; align-items: flex-start; font-size: var(--fs-md); }
+.steps b { flex: none; width: 1.7em; height: 1.7em; border-radius: 50%; background: var(--amber); color: #1a1a2e; display: grid; place-items: center; font-family: system-ui, sans-serif; font-size: 0.9em; }
 
 .links { display: flex; flex-wrap: wrap; gap: 0.6em 1.4em; justify-content: center; align-items: center; font-family: system-ui, sans-serif; font-size: var(--fs-sm); }
 .links a { color: var(--amber); white-space: nowrap; }
 .toggle { display: inline-flex; align-items: center; gap: 0.4em; color: var(--muted); cursor: pointer; white-space: nowrap; }
-#toggle-landing { background: none; border: 1px solid var(--border); color: var(--muted); border-radius: 999px; padding: 0.3em 0.8em; font: inherit; text-transform: none; white-space: nowrap; }
 .foot { text-align: center; color: var(--muted); font-size: var(--fs-sm); font-family: system-ui, sans-serif; margin: 0; }
 .mini { display: none; }
 
-/* ---------- compact top bar (scene is live) ---------- */
+/* ---------- compact top bar (scene is live) ----------
+   One row: brand · number+keys · status · guide toggle. Everything else is hidden,
+   so the 3D storybook underneath stays completely clear. */
 #landing.compact {
   inset: 0 0 auto 0;
   width: 100%;
-  padding: 0.5rem var(--pad) 0.6rem;
-  gap: 0.35rem;
+  padding: 0.5rem var(--pad);
+  gap: 0;
   overflow: visible;
-  background: linear-gradient(rgba(14, 18, 44, 0.92) 60%, rgba(14, 18, 44, 0));
+  background: linear-gradient(rgba(14, 18, 44, 0.92) 55%, rgba(14, 18, 44, 0));
 }
 #landing.compact .hero {
-  flex-direction: row; flex-wrap: wrap; justify-content: space-between; align-items: center;
-  gap: 0.5rem 1.25rem; text-align: left;
+  flex-direction: row; flex-wrap: wrap; align-items: center;
+  gap: 0.4rem 1.25rem; text-align: left; width: 100%;
 }
-#landing.compact .brand { order: 1; }
 #landing.compact .moon { font-size: var(--fs-lg); }
 #landing.compact h1 { font-size: var(--fs-lg); }
 #landing.compact .tagline { display: none; }
 #landing.compact .mini {
-  order: 2; display: inline-flex; flex-wrap: wrap; align-items: center; gap: 0.35em 0.5em;
-  color: var(--muted); font-family: system-ui, sans-serif; font-size: var(--fs-sm);
+  display: inline-flex; flex-wrap: wrap; align-items: center; gap: 0.3em 0.45em;
+  color: var(--muted); font-family: system-ui, sans-serif; font-size: var(--fs-sm); min-width: 0;
 }
-#landing.compact .mini b { color: var(--amber); font-size: var(--fs-md); font-family: Georgia, serif; margin-right: 0.5em; white-space: nowrap; }
-#landing.compact .mini kbd { width: 1.9em; height: 1.9em; font-size: 0.9em; border-radius: 0.4em; box-shadow: 0 0.12em 0 #b39b6a; }
-#landing.compact .status { order: 3; max-width: min(100%, 22rem); }
-#landing.compact .call-card, #landing.compact .keys-card, #landing.compact .steps, #landing.compact .foot { display: none; }
-#landing.compact .links { justify-content: flex-start; gap: 0.4em 1.2em; }
+#landing.compact .mini b { color: var(--amber); font-size: var(--fs-md); font-family: Georgia, serif; margin-right: 0.4em; white-space: nowrap; }
+#landing.compact .mini kbd { width: 1.8em; height: 1.8em; font-size: 0.85em; border-radius: 0.4em; box-shadow: 0 0.12em 0 #b39b6a; }
+#landing.compact .status { margin-left: auto; }
+#landing.compact .card,
+#landing.compact .steps,
+#landing.compact .links,
+#landing.compact .foot { display: none; }
 
-@media (max-width: 40rem) {
-  #landing.compact .mini { display: none; }          /* phone: brand + status only */
-  #landing.compact .links { font-size: 0.75rem; }
+@media (max-width: 60rem) {
+  #landing.compact .mini kbd + kbd { margin-left: -0.15em; }
+}
+@media (max-width: 44rem) {
+  #landing.compact .mini { display: none; }          /* small screens: brand + status only */
 }
 
-/* demo.css (XR Blocks template) styles bare <header> as position:fixed — neutralise it inside the landing */
-#landing header, #landing nav, #landing section {
-  position: static !important; inset: auto !important; width: auto !important; height: auto !important;
-  margin: 0 !important; padding: 0 !important; background: none !important; z-index: auto !important;
-  box-sizing: border-box; transform: none !important; mix-blend-mode: normal !important; color: inherit !important;
+/* ---------- background & legibility ---------- */
+.night-sky {
+  background:
+    radial-gradient(1200px 700px at 70% 15%, rgba(120, 140, 220, 0.22), transparent 60%),
+    radial-gradient(900px 600px at 20% 80%, rgba(255, 190, 120, 0.12), transparent 60%),
+    linear-gradient(#0a0d20 0%, #131a3d 55%, #1d2140 100%);
 }
-#landing section.card { padding: calc(var(--gap) * 1.2) calc(var(--gap) * 1.6) !important; background: var(--night) !important; }
+/* The expanded guide sits over a live 3D scene, so it carries its own scrim. */
+#landing:not(.compact) {
+  background: linear-gradient(rgba(10, 13, 32, 0.86), rgba(10, 13, 32, 0.7) 55%, rgba(10, 13, 32, 0.15));
+}
+#landing h1, #landing .tagline, #landing .steps, #landing .links, #landing .foot {
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.85);
+}

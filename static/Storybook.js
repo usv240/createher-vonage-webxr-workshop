@@ -12,7 +12,7 @@ import * as THREE from 'three';
 
 const W = 1600;   // canvas px (two pages side by side)
 const H = 1000;
-const PAGE_W = 1.15; // metres
+const PAGE_W = 1.3; // metres
 const PAGE_H = PAGE_W * (H / W);
 
 export class Storybook extends THREE.Group {
@@ -40,7 +40,7 @@ export class Storybook extends THREE.Group {
     // A soft "cover" behind the pages so it reads as a book in AR
     const cover = new THREE.Mesh(
       new THREE.PlaneGeometry(PAGE_W + 0.04, PAGE_H + 0.04),
-      new THREE.MeshStandardMaterial({ color: 0x7a3e2f, roughness: 0.9 })
+      new THREE.MeshBasicMaterial({ color: 0x7a3e2f })
     );
     cover.position.z = -0.005;
     this.add(cover);
@@ -48,7 +48,7 @@ export class Storybook extends THREE.Group {
     // Floating star the child can "send" (decorative — the button does the sending)
     this.star = new THREE.Mesh(
       new THREE.OctahedronGeometry(0.035, 0),
-      new THREE.MeshStandardMaterial({ color: 0xffd54a, emissive: 0xffb300, emissiveIntensity: 0.8 })
+      new THREE.MeshBasicMaterial({ color: 0xffd54a })
     );
     this.star.position.set(PAGE_W / 2 + 0.12, PAGE_H / 2, 0.02);
     this.add(this.star);

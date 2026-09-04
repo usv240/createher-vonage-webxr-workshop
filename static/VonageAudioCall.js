@@ -19,6 +19,10 @@ const SEND_TO_PARENT = [
   { label: 'Night', text: '{child} says: goodnight, I love you.' },
 ];
 
+// How far in front of the child the storybook sits, in metres. Closer = larger on screen.
+// Override for filming or a big monitor with ?dist=0.9
+const DIST = Math.max(0.6, parseFloat(new URLSearchParams(location.search).get('dist') || '1.05'));
+
 export class VonageAudioCall extends xb.Script {
   constructor() {
     super();
@@ -64,10 +68,12 @@ export class VonageAudioCall extends xb.Script {
     } catch (e) {
       console.error('Could not load story', e);
     }
+    // Panel first: a call can be invited the instant the session exists, and
+    // updateControlRow() silently does nothing without a grid to draw into.
+    this._createLobbyPanel();
     this.setupVonageListeners();
     this._connectStorySocket();
     await this.connectToVonage(this.userName);
-    this._createLobbyPanel();
   }
 
   update() {
@@ -87,19 +93,25 @@ export class VonageAudioCall extends xb.Script {
   }
 
   _addLights() {
-    // The ball-pit demo used to light the scene; a bedtime scene needs its own warm light.
-    const hemi = new THREE.HemisphereLight(0xfff4e0, 0x3a2f4a, 1.1);
-    const key = new THREE.DirectionalLight(0xffe9c4, 1.4);
+    // Removing the ball-pit demo also removed the only lights in the scene. Add warm bedtime
+    // light to the scene root when we can reach it, and to this script otherwise. Materials
+    // that must never go black (the parent's face, the book cover) are emissive as well.
+    const hemi = new THREE.HemisphereLight(0xfff4e0, 0x3a2f4a, 1.6);
+    const key = new THREE.DirectionalLight(0xffe9c4, 1.6);
     key.position.set(0.6, 1.8, 1.2);
-    this.add(hemi);
-    this.add(key);
+    const fill = new THREE.DirectionalLight(0xbfd4ff, 0.6);
+    fill.position.set(-1.2, 1.0, 0.8);
+    const target = xb.core?.scene || this;
+    target.add(hemi);
+    target.add(key);
+    target.add(fill);
   }
 
   // ===================== panels =====================
   _createLobbyPanel() {
     if (this.panel) return;
-    this.panel = new xb.SpatialPanel({ backgroundColor: '#1a1a2ecc', width: 1.0, height: 0.42 });
-    this.panel.position.set(0, xb.user.height + 0.55, -xb.user.objectDistance - 0.2);
+    this.panel = new xb.SpatialPanel({ backgroundColor: '#1a1a2ee6', width: 1.1, height: 0.36 });
+    this.panel.position.set(0, xb.user.height + 0.62, -DIST - 0.08);
     this.add(this.panel);
     this.grid = this.panel.addGrid();
     this.grid.addRow({ weight: 0.35 }).addText({
@@ -171,8 +183,8 @@ export class VonageAudioCall extends xb.Script {
 
   _createReplyPanel() {
     if (this.replyPanel) return;
-    this.replyPanel = new xb.SpatialPanel({ backgroundColor: '#1a1a2ecc', width: 0.55, height: 0.62 });
-    this.replyPanel.position.set(1.05, xb.user.height - 0.05, -xb.user.objectDistance);
+    this.replyPanel = new xb.SpatialPanel({ backgroundColor: '#1a1a2ee6', width: 0.5, height: 0.62 });
+    this.replyPanel.position.set(1.02, xb.user.height - 0.02, -DIST);
     this.add(this.replyPanel);
     const grid = this.replyPanel.addGrid();
     grid.addRow({ weight: 0.14 }).addText({
@@ -209,10 +221,10 @@ export class VonageAudioCall extends xb.Script {
     if (this.puppetHead) return;
     const head = new THREE.Group();
     // Parent sits to the left of the book, a little lower — "beside the bed"
-    head.position.set(-0.95, xb.user.height - 0.05, -xb.user.objectDistance + 0.1);
+    head.position.set(-1.0, xb.user.height + 0.02, -DIST);
     const faceMesh = new THREE.Mesh(
       new THREE.SphereGeometry(0.11, 32, 24),
-      new THREE.MeshStandardMaterial({ color: 0xf2d4b3, roughness: 0.6, metalness: 0.05 })
+      new THREE.MeshStandardMaterial({ color: 0xf2d4b3, emissive: 0x6b4f38, emissiveIntensity: 0.85, roughness: 0.6, metalness: 0.0 })
     );
     head.add(faceMesh);
     this.face = new xb.StylizedFace({ showEyes: true });
@@ -249,7 +261,7 @@ export class VonageAudioCall extends xb.Script {
   _createBook() {
     if (this.book || !this.story) return;
     this.book = new Storybook(this.story);
-    this.book.position.set(0, xb.user.height - 0.02, -xb.user.objectDistance);
+    this.book.position.set(0, xb.user.height - 0.12, -DIST);
     this.book.rotation.x = -0.15;
     this.add(this.book);
     this.tracker = new ReadingTracker(this.book.words);
@@ -296,23 +308,56 @@ export class VonageAudioCall extends xb.Script {
     this.book.setBanner(`${this.story.parentName || 'Parent'} pressed ${key}: ${fx.label}`);
   }
 
-  // Phone audio is quiet in a browser tab; route it through a gain stage (?gain=2.5 to adjust)
+  // Phone audio is quiet in a browser tab, so we add a gain stage (?gain=3 to push it further).
+  // Critical: the raw <audio> element is only silenced while the boosted path is actually
+  // running. Browsers suspend an AudioContext until a user gesture, and muting the element
+  // before that would leave the child hearing nothing at all.
   _boostAudio(audioElement, stream) {
+    if (!audioElement) return;
+    audioElement.muted = false;
+    audioElement.volume = 1;
+    const gainValue = parseFloat(new URLSearchParams(location.search).get('gain') || '2.5');
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC || !(gainValue > 1)) return;
     try {
-      const gainValue = parseFloat(new URLSearchParams(location.search).get('gain') || '2');
-      this.audioCtx = this.audioCtx || new (window.AudioContext || window.webkitAudioContext)();
-      const ctx = this.audioCtx;
-      if (ctx.state === 'suspended') ctx.resume();
+      const ctx = (this.audioCtx = this.audioCtx || new AC());
       const src = ctx.createMediaStreamSource(stream);
       const gain = ctx.createGain();
       gain.gain.value = gainValue;
       src.connect(gain).connect(ctx.destination);
-      audioElement.muted = true; // avoid double playback
-      this._boost = { src, gain };
-      console.log('Audio boost x' + gainValue);
+
+      const sync = () => {
+        const running = ctx.state === 'running';
+        audioElement.muted = running; // only mute once the boosted path is audible
+        console.log(`Call audio: context ${ctx.state}, boost x${gainValue}, element ${running ? 'muted' : 'playing'}`);
+      };
+      ctx.addEventListener?.('statechange', sync);
+      ctx.resume().then(sync).catch(sync);
+      sync();
+
+      // Any click/keypress lets the browser start the context, so re-check then too.
+      const resume = () => ctx.resume().then(sync).catch(() => {});
+      window.addEventListener('pointerdown', resume);
+      window.addEventListener('keydown', resume);
+      this._boost = { src, gain, ctx, resume, audioElement, sync };
     } catch (e) {
-      console.warn('Audio boost unavailable', e);
+      console.warn('Audio boost unavailable, playing unboosted', e);
+      audioElement.muted = false;
     }
+  }
+
+  _stopBoost() {
+    const b = this._boost;
+    if (!b) return;
+    try {
+      b.src.disconnect();
+      b.gain.disconnect();
+      b.audioElement.muted = false;
+      window.removeEventListener('pointerdown', b.resume);
+      window.removeEventListener('keydown', b.resume);
+      b.ctx.removeEventListener?.('statechange', b.sync);
+    } catch (e) {}
+    this._boost = null;
   }
 
   // tiny synthesized sounds (no assets needed)
@@ -419,7 +464,7 @@ export class VonageAudioCall extends xb.Script {
   }
 
   async _endCallUI() {
-    try { this._boost?.src.disconnect(); this._boost = null; } catch (e) {}
+    this._stopBoost();
     this.listener?.stop();
     this.listener = null;
     this._removeAvatar();
