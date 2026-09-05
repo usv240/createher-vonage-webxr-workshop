@@ -47,15 +47,39 @@
   function setCompact(on) {
     landing.classList.toggle('compact', on);
     toggle.textContent = on ? '▾ Guide' : '▴ Close';
+    toggle.setAttribute('aria-expanded', String(!on));
   }
   toggle.addEventListener('click', () => setCompact(!landing.classList.contains('compact')));
-  setTimeout(() => setCompact(true), 6000);              // give first-time viewers a look, then get out of the way
+  setCompact(landing.classList.contains('compact'));     // sync the label with the real state on load
+  const autoCollapse = setTimeout(() => setCompact(true), 6000); // a look, then get out of the way
+  // Someone reading the guide is not someone who wants it yanked away mid-sentence.
+  landing.addEventListener('pointerdown', () => clearTimeout(autoCollapse), { once: true });
   window.addEventListener('ouac:ring', () => setCompact(true));
+
+  const preview = $('preview-btn');
 
   // XR Blocks injects its own "OPEN THE STORYBOOK" button; hide the landing when it's pressed.
   document.addEventListener('click', (e) => {
     const btn = e.target.closest('button');
+    if (btn === preview) return;
     if (btn && /storybook|end/i.test(btn.textContent)) landing.classList.add('hidden');
   });
   window.addEventListener('ouac:ring', () => setStatus('ringing', 'Incoming story call…'));
+
+  // "Watch the story" — the tour for anyone who has no second phone to call from.
+  // The scene lives underneath this overlay, so get the overlay out of the way first.
+  preview.addEventListener('click', () => {
+    setCompact(true);
+    window.dispatchEvent(new Event('ouac:preview'));
+  });
+  window.addEventListener('ouac:preview-start', () => {
+    preview.disabled = true;
+    preview.textContent = '▶ Playing…';
+    setStatus('live', 'Preview — this is what the child sees');
+  });
+  window.addEventListener('ouac:preview-end', () => {
+    preview.disabled = false;
+    preview.textContent = '▶ Watch again';
+    setStatus('waiting', 'Ready — waiting for a story call');
+  });
 })();

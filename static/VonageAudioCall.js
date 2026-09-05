@@ -9,7 +9,7 @@ import * as THREE from 'three';
 import * as xb from 'xrblocks';
 import { LipsyncMouth } from 'lipsync';
 import { Storybook } from './Storybook.js';
-import { StoryListener, ReadingTracker } from './StoryListener.js';
+import { StoryListener, ReadingTracker, wordIndexAtChar } from './StoryListener.js';
 
 // ⌄⌄⌄ Things the child can send to the parent's ear ⌄⌄⌄
 const SEND_TO_PARENT = [
@@ -55,6 +55,7 @@ export class VonageAudioCall extends xb.Script {
     this.timeline = [];
     this.firedKeywords = new Set();
     this.replay = null; // { audio, timers[] }
+    this.preview = null; // { timers[], cancelled } — self-guided tour, no phone needed
     this._last = performance.now();
     this.audioCtx = null;
   }
@@ -73,6 +74,9 @@ export class VonageAudioCall extends xb.Script {
     this._createLobbyPanel();
     this.setupVonageListeners();
     this._connectStorySocket();
+    // The landing overlay offers the same tour to anyone who never puts on a headset.
+    window.addEventListener('ouac:preview', () => this._startPreview());
+    window.addEventListener('ouac:replay', () => this._startReplay());
     await this.connectToVonage(this.userName);
   }
 
@@ -137,14 +141,32 @@ export class VonageAudioCall extends xb.Script {
     this.controlRow = this.grid.addRow({ weight: 0.3 });
 
     if (state === 'IDLE') {
+      // Anyone can watch the whole experience without a phone — a judge opening the link,
+      // a caregiver deciding whether this is for their family.
+      const previewBtn = this.controlRow.addCol({ weight: 0.5 }).addTextButton({
+        text: '▶ Preview',
+        fontSize: 0.22,
+        backgroundColor: '#2f5d3a',
+        fontColor: '#ffffff',
+      });
+      previewBtn.onTriggered = () => this._startPreview();
+
       const hasStory = this.state.recordings > 0;
-      const replayBtn = this.controlRow.addCol({ weight: 1 }).addTextButton({
-        text: hasStory ? 'Replay' : 'Waiting…',
+      const replayBtn = this.controlRow.addCol({ weight: 0.5 }).addTextButton({
+        text: hasStory ? 'Replay' : 'No story yet',
         fontSize: 0.22,
         backgroundColor: hasStory ? '#3b3b80' : '#2b2b3a',
         fontColor: hasStory ? '#ffffff' : '#8a8aa0',
       });
       replayBtn.onTriggered = () => this._startReplay();
+    } else if (state === 'PREVIEW') {
+      const stopBtn = this.controlRow.addCol({ weight: 1 }).addTextButton({
+        text: 'Stop preview',
+        fontSize: 0.3,
+        backgroundColor: '#80331a',
+        fontColor: '#ffffff',
+      });
+      stopBtn.onTriggered = () => this._stopPreview();
     } else if (state === 'INCOMING') {
       const answerBtn = this.controlRow.addCol({ weight: 0.5 }).addIconButton({
         text: 'call',
@@ -285,7 +307,7 @@ export class VonageAudioCall extends xb.Script {
     if (!this.book || !this.tracker) return;
     const n = this.tracker.feed(words);
     this.book.highlightUpTo(n);
-    if (isFinal) this.book.setCaption(transcript);
+    this.book.setCaption(transcript); // live, not just on isFinal — captions are the point for a deaf child
     this.timeline.push({ t: Date.now(), type: 'words', data: { n } });
     // keywords -> illustration comes alive
     const kw = this.book.page.keywords || {};
@@ -487,6 +509,8 @@ export class VonageAudioCall extends xb.Script {
   setupVonageListeners() {
     this.client.on('callInvite', (callId, from) => {
       this.callId = callId;
+      this._stopPreview();   // a real parent always outranks the demo tour
+      this._stopReplay();
       const masked = String(from).replace(/\d(?=(?:\D*\d){4})/g, '*');
       this._setStatus(`${this.story?.parentName || 'Someone'} is calling (${masked})`);
       this.updateControlRow('INCOMING');
@@ -529,11 +553,13 @@ export class VonageAudioCall extends xb.Script {
     this.socket.on('state', (s) => {
       const pageChanged = s.page !== this.state.page;
       this.state = s;
-      if (pageChanged && this.book) {
+      if (pageChanged && this.book && !this.preview) {
         this._applyPage(s.page);
         this._beep('twinkle');
       }
-      if (!s.inCall && !this.callId && this.panel) this.updateControlRow(this.replay ? 'REPLAY' : 'IDLE');
+      if (!s.inCall && !this.callId && this.panel) {
+        this.updateControlRow(this.replay ? 'REPLAY' : this.preview ? 'PREVIEW' : 'IDLE');
+      }
     });
     this.socket.on('keypad', ({ digit }) => {
       if (this.book && (digit === '#' || digit === '*')) {
@@ -551,9 +577,111 @@ export class VonageAudioCall extends xb.Script {
     });
   }
 
+  // ===================== preview (the tour, no phone needed) =====================
+  // The whole point of this project is that the parent needs nothing but a phone — but the
+  // person *opening this link* usually has no second phone to hand. Preview narrates the book
+  // with the browser's own speech synthesis and drives the identical highlight/effect path a
+  // real parent's voice does, so the experience is never a locked door.
+  _startPreview() {
+    if (this.preview || this.replay || this.callId) return;
+    this._createBook();
+    if (!this.book || !this.story) return this._setStatus('Story not loaded yet.');
+    this.preview = { timers: [], cancelled: false };
+    this._setStatus('Preview — no call needed');
+    this.updateControlRow('PREVIEW');
+    window.dispatchEvent(new Event('ouac:preview-start'));
+    this._previewFrom(0);
+  }
+
+  _previewFrom(i) {
+    const run = this.preview;
+    if (!run || run.cancelled) return;
+    if (i >= this.story.pages.length) {
+      this.book?.setBanner('That is the whole story. Now give the number to someone far away.');
+      run.timers.push(setTimeout(() => this._stopPreview(), 6000));
+      return;
+    }
+    this._applyPage(i);
+    this.book.setBanner(`Preview — page ${i + 1} of ${this.story.pages.length}`);
+    this._narratePage(i, () => {
+      if (!this.preview || this.preview.cancelled) return;
+      this._beep('twinkle');
+      this.preview.timers.push(setTimeout(() => this._previewFrom(i + 1), 900));
+    });
+  }
+
+  // Speaks one page and highlights along with it. Falls back to timed pacing where speech
+  // synthesis is missing or silent, so the tour always completes.
+  _narratePage(i, done) {
+    const run = this.preview;
+    const page = this.story.pages[i];
+    const text = page.text;
+    const words = text.split(/\s+/).filter(Boolean);
+    let finished = false;
+    const finish = () => {
+      if (finished) return;
+      finished = true;
+      done();
+    };
+    const showUpTo = (n) => {
+      if (!this.preview || this.preview.cancelled || !this.book) return;
+      this.book.highlightUpTo(n);
+      this.book.setCaption(words.slice(0, n).join(' '));
+      const said = words.slice(0, n).join(' ').toLowerCase();
+      for (const [word, effect] of Object.entries(page.keywords || {})) {
+        if (!this.firedKeywords.has(word) && said.includes(word)) {
+          this.firedKeywords.add(word);
+          this.book.trigger(effect, 3);
+        }
+      }
+    };
+
+    const synth = window.speechSynthesis;
+    if (synth && typeof SpeechSynthesisUtterance !== 'undefined') {
+      try {
+        const u = new SpeechSynthesisUtterance(text);
+        u.rate = 0.85;
+        u.pitch = 1.05;
+        // charIndex -> word index, so the glow tracks the narration exactly
+        u.onboundary = (e) => {
+          if (e.name && e.name !== 'word') return;
+          showUpTo(wordIndexAtChar(text, e.charIndex)); // unit-tested in test/preview.test.js
+        };
+        u.onend = () => { showUpTo(words.length); finish(); };
+        u.onerror = () => { showUpTo(words.length); finish(); };
+        synth.cancel();
+        synth.speak(u);
+        run.utterance = u;
+        // Chrome silently drops long utterances and never fires onend; keep the tour moving.
+        run.timers.push(setTimeout(() => { showUpTo(words.length); finish(); }, 1200 + words.length * 620));
+        return;
+      } catch (e) {
+        /* fall through to timed pacing */
+      }
+    }
+    words.forEach((_, n) => run.timers.push(setTimeout(() => showUpTo(n + 1), (n + 1) * 380)));
+    run.timers.push(setTimeout(finish, words.length * 380 + 700));
+  }
+
+  _stopPreview() {
+    if (!this.preview) return;
+    this.preview.cancelled = true;
+    this.preview.timers.forEach(clearTimeout);
+    this.preview = null;
+    try { window.speechSynthesis?.cancel(); } catch (e) { /* not available */ }
+    this.book?.setBanner('');
+    this.book?.setCaption('');
+    if (!this.callId) {
+      this._setStatus('Waiting for a story call…');
+      this.updateControlRow('IDLE');
+    }
+    window.dispatchEvent(new Event('ouac:preview-end'));
+  }
+
   // ===================== replay (keepsake mode) =====================
   async _startReplay() {
     if (this.replay) return;
+    this._stopPreview();
     let data;
     try {
       const r = await fetch('/api/replay/latest');
@@ -564,12 +692,16 @@ export class VonageAudioCall extends xb.Script {
       return;
     }
     this._createBook();
+    if (!this.book) return;
     this._applyPage(0);
-    this.book.setBanner(`Replaying ${this.story?.parentName || 'parent'}'s story from last time`);
-    const audio = new Audio(data.audioUrl);
+    const who = this.story?.parentName || 'parent';
+
+    // The page turns, highlights and effects are ours; the audio comes from Vonage. If the
+    // recording is still uploading (or the download failed) the visual replay still runs, so
+    // the keepsake is never a dead button.
     const timers = [];
     const t0 = data.startTime;
-    for (const ev of data.events) {
+    for (const ev of data.events || []) {
       const delay = Math.max(0, ev.t - t0);
       timers.push(
         setTimeout(() => {
@@ -580,8 +712,20 @@ export class VonageAudioCall extends xb.Script {
         }, delay)
       );
     }
-    audio.onended = () => this._stopReplay();
-    audio.play().catch((e) => console.warn('autoplay blocked; click again', e));
+    const lastEvent = (data.events || []).reduce((m, ev) => Math.max(m, ev.t - t0), 0);
+
+    let audio = null;
+    if (data.audioUrl) {
+      audio = new Audio(data.audioUrl);
+      audio.onended = () => this._stopReplay();
+      audio.onerror = () => this.book?.setBanner('Replaying the pages — audio unavailable');
+      audio.play().catch((e) => console.warn('autoplay blocked; press Replay again', e));
+      this.book.setBanner(`Replaying ${who}'s story from last time`);
+    } else {
+      this.book.setBanner(`Replaying ${who}'s pages — the recording is still uploading`);
+      timers.push(setTimeout(() => this._stopReplay(), lastEvent + 3000));
+    }
+
     this.replay = { audio, timers };
     this._setStatus('Replaying…');
     this.updateControlRow('REPLAY');
@@ -590,10 +734,12 @@ export class VonageAudioCall extends xb.Script {
   _stopReplay() {
     if (!this.replay) return;
     this.replay.timers.forEach(clearTimeout);
-    this.replay.audio.pause();
+    this.replay.audio?.pause();
     this.replay = null;
     this.book?.setBanner('');
-    this._setStatus('Waiting for a story call…');
-    this.updateControlRow('IDLE');
+    if (!this.callId) {
+      this._setStatus('Waiting for a story call…');
+      this.updateControlRow('IDLE');
+    }
   }
 }

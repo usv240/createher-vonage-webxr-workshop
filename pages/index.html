@@ -5,9 +5,15 @@
   <title>Once Upon a Call</title>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
-  <meta name="description" content="A live AR bedtime story, read over any phone." />
+  <meta name="description" content="A live AR bedtime story, read over any phone. Built with the Vonage Voice API." />
+  <meta name="theme-color" content="#0e122c" />
+  <meta property="og:title" content="Once Upon a Call" />
+  <meta property="og:description" content="A live AR bedtime story, read over any phone — for every parent who can only phone home." />
+  <meta property="og:type" content="website" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%230e122c'/><circle cx='15' cy='16' r='8.5' fill='%23ffd54a'/><circle cx='19.5' cy='13' r='7.5' fill='%230e122c'/></svg>" />
   <link type="text/css" rel="stylesheet" href="./demo.css" />
-  <link type="text/css" rel="stylesheet" href="./landing.css?v=7" />
+  <link type="text/css" rel="stylesheet" href="./landing.css?v=9" />
   <!-- ⌄⌄⌄ Load the Vonage Client SDK ⌄⌄⌄ -->
   <script src="https://cdn.jsdelivr.net/npm/@vonage/client-sdk@latest/dist/vonageClientSDK.min.js"></script>
   <script src="/socket.io/socket.io.js"></script>
@@ -40,7 +46,7 @@
 
   <!-- Landing overlay. NOTE: no <header>/<nav> elements here on purpose — the XR Blocks
        template stylesheet (demo.css) styles bare <header> as position:fixed. -->
-  <main id="landing" aria-live="polite">
+  <main id="landing">
     <div class="hero">
       <div class="brand">
         <span class="moon" aria-hidden="true"></span>
@@ -51,7 +57,7 @@
         <b id="phone-mini"></b>
         <kbd>#</kbd> next <kbd>*</kbd> back <kbd>1</kbd><kbd>2</kbd><kbd>3</kbd> surprises
       </span>
-      <div id="status" class="status waiting">
+      <div id="status" class="status waiting" role="status">
         <span class="dot"></span><span id="status-text">Connecting…</span>
       </div>
       <button id="toggle-landing" type="button">▾ Guide</button>
@@ -61,6 +67,10 @@
       <p class="label">The parent calls</p>
       <p id="phone" class="phone">…</p>
       <p class="hint">From any phone — landline, payphone, flip phone. No app, no internet.</p>
+      <div class="try">
+        <button id="preview-btn" type="button" class="cta">▶ Watch the story</button>
+        <span class="try-hint">No phone handy? Take the 90-second tour.</span>
+      </div>
     </div>
 
     <div class="card keys-card">
@@ -88,7 +98,7 @@
     <p class="foot">Built with the Vonage Voice API + XR Blocks · DIALED IN Builder Challenge</p>
   </main>
 
-  <script src="./landing.js?v=7"></script>
+  <script src="./landing.js?v=9"></script>
   <script type="module" src="./main.js"></script>
 </body>
 

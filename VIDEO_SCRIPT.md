@@ -16,6 +16,10 @@ Show: three still frames — payphone, ship satellite phone, hospital bedside ph
 > "Once Upon a Call turns that phone call into a bedtime story the child can *see*. The parent needs nothing but a phone. The child sees them appear in the room, with a storybook."
 Show: title card + the AR book in the app.
 
+**If anything goes wrong on the day:** press **▶ Watch the story**. The narrated tour drives the
+same page-turn, highlight and effect code as a live call, so you can film the whole experience
+even if the network, the Codespace or the phone lets you down. Never film a broken take.
+
 **0:45 – 1:10 — The call**
 Screen: app open, "Waiting for a story call…". Phone in frame: dial the Vonage number.
 Phone audio (let it play): *"Welcome to Once Upon a Call. Opening Maya's storybook. Press pound to turn the page…"*
@@ -58,4 +62,6 @@ GitHub link on screen.
 - [ ] Hug heard on the phone
 - [ ] PIN prompt from a second phone (or set APPROVED_NUMBERS to exclude your phone for one take)
 - [ ] Replay mode
+- [ ] (Backup take) ▶ Watch the story narrated tour
+- [ ] Live captions visible under the illustration
 - [ ] Stats card + GitHub link

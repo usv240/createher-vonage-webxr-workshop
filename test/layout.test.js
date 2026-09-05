@@ -16,6 +16,7 @@ const VIEWPORTS = [
 
 const BLOCKS = ['.hero', '.call-card', '.keys-card', '.steps', '.links', '.foot'];
 const HERO_ITEMS = ['.brand', '.mini', '#status', '#toggle-landing'];
+const TRY_ITEMS = ['#preview-btn', '.try-hint'];
 
 function overlaps(a, b) {
   const eps = 1; // allow a 1px rounding kiss
@@ -66,7 +67,7 @@ function overlaps(a, b) {
           out[s] = { x: r.x, y: r.y, width: r.width, height: r.height, position: cs.position };
         }
         return out;
-      }, [...BLOCKS, ...HERO_ITEMS]);
+      }, [...BLOCKS, ...HERO_ITEMS, ...TRY_ITEMS]);
 
       const overflow = await page.evaluate(() => {
         const l = document.getElementById('landing');
@@ -100,13 +101,23 @@ function overlaps(a, b) {
           }
         }
       }
-      // 3. nothing may be position:fixed (that was the demo.css <header> bug)
+      // 3. the "Watch the story" call-to-action must be a real, non-overlapping hit target
+      if (mode === 'expanded') {
+        const cta = boxes['#preview-btn'];
+        if (!cta) problems.push('#preview-btn missing (the no-phone way in)');
+        else {
+          if (cta.height < 30) problems.push(`#preview-btn only ${Math.round(cta.height)}px tall`);
+          const hint = boxes['.try-hint'];
+          if (hint && overlaps(cta, hint)) problems.push('#preview-btn overlaps .try-hint');
+        }
+      }
+      // 4. nothing may be position:fixed (that was the demo.css <header> bug)
       for (const [sel, b] of Object.entries(boxes)) {
         if (b.position === 'fixed') problems.push(`${sel} is position:fixed`);
       }
-      // 4. nothing may run off the side of the window
+      // 5. nothing may run off the side of the window
       if (overflow.length) problems.push(`overflows viewport: ${overflow.join(', ')}`);
-      // 5. compact bar must stay a thin strip
+      // 6. compact bar must stay a thin strip
       if (mode === 'compact') {
         const h = await page.evaluate(() => document.getElementById('landing').getBoundingClientRect().height);
         if (h > Math.max(120, vp.height * 0.18)) problems.push(`compact bar too tall: ${Math.round(h)}px`);
@@ -134,6 +145,15 @@ function overlaps(a, b) {
   }));
   console.log('\ncontent:', JSON.stringify(content));
   if (!/\d/.test(content.phone)) { console.log('FAIL  phone number did not render'); failures++; }
+  const extras = await page.evaluate(() => ({
+    favicon: !!document.querySelector('link[rel="icon"]'),
+    cta: (document.getElementById('preview-btn') || {}).textContent,
+    liveRegions: document.querySelectorAll('[aria-live], [role="status"]').length,
+  }));
+  console.log('extras:', JSON.stringify(extras));
+  if (!extras.favicon) { console.log('FAIL  no favicon'); failures++; }
+  if (!extras.cta) { console.log('FAIL  no preview CTA'); failures++; }
+  if (extras.liveRegions !== 1) { console.log(`FAIL  expected exactly 1 live region, found ${extras.liveRegions}`); failures++; }
 
   await page.screenshot({ path: 'expanded.png' });
   await page.evaluate(() => document.getElementById('landing').classList.add('compact'));

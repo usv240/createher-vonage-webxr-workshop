@@ -84,6 +84,21 @@ h1 { font-size: var(--fs-xl); margin: 0; font-weight: 600; letter-spacing: 0.01e
 .phone { margin: 0; font-size: var(--fs-phone); line-height: 1.1; color: var(--amber); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
 .hint { margin: 0.4em 0 0; color: var(--muted); font-size: var(--fs-md); }
 
+/* Primary way in for anyone without a second phone. Sits under the number so the hierarchy
+   reads: the parent dials -> everyone else can still watch. */
+.try { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5em 0.9em; margin-top: 0.9em; }
+.cta {
+  flex: none; cursor: pointer; border-radius: 999px; white-space: nowrap;
+  padding: 0.5em 1.2em; font: 600 var(--fs-md) system-ui, sans-serif;
+  background: var(--amber); color: #1a1a2e; border: 1px solid var(--amber);
+  text-transform: none;   /* demo.css uppercases every button; this is a bedtime story, not a klaxon */
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+.cta:hover { box-shadow: 0 0 0 0.35em rgba(255, 213, 74, 0.16); }
+.cta:active { transform: translateY(1px); }
+.cta[disabled] { opacity: 0.55; cursor: default; box-shadow: none; }
+.try-hint { color: var(--muted); font-size: var(--fs-sm); font-family: system-ui, sans-serif; }
+
 .keys { list-style: none; margin: 0.5em 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 0.6em 1.2em; }
 .keys li { display: flex; align-items: center; gap: 0.6em; font-size: var(--fs-md); }
 kbd {
@@ -152,4 +167,22 @@ kbd {
 }
 #landing h1, #landing .tagline, #landing .steps, #landing .links, #landing .foot {
   text-shadow: 0 1px 4px rgba(0, 0, 0, 0.85);
+}
+
+/* ---------- accessibility ----------
+   The Access lens cuts both ways: the parent needs no screen, and the person at the screen
+   needs a keyboard path and a way to opt out of motion. */
+#landing :focus-visible {
+  outline: 3px solid var(--amber);
+  outline-offset: 2px;
+  border-radius: 0.4em;
+}
+#landing a:focus-visible { outline-offset: 4px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .status .dot,
+  .status.waiting .dot,
+  .status.ringing .dot { animation: none; }
+  .cta { transition: none; }
+  .cta:active { transform: none; }
 }

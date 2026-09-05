@@ -353,12 +353,32 @@ app.get('/api/info', (req, res) => {
   });
 });
 app.get('/api/state', (req, res) => res.json({ ...publicState(), parentLeg: session.parentLeg }));
+
+// Pre-flight: one call that says whether tonight's demo will work, so nothing is a surprise.
+app.get('/api/health', (req, res) => {
+  const checks = {
+    vonageApp: !!appId && !!privateKey,
+    phoneNumber: !!vonageNumber,
+    publicUrl: !BASE_URL.includes('localhost'),
+    childAppOnline: !!session.userLoggedIn,
+    captions: !!process.env.DEEPGRAM_API_KEY,
+    callerAllowList: APPROVED_NUMBERS.length > 0,
+    familyPin: !!FAMILY_PIN,
+    savedStories: session.recordings.length,
+  };
+  const required = ['vonageApp', 'phoneNumber', 'publicUrl'];
+  res.json({ ready: required.every((k) => checks[k]), baseUrl: BASE_URL, checks });
+});
 app.get('/api/asr-key', (req, res) => res.json({ key: process.env.DEEPGRAM_API_KEY || null }));
 app.get('/api/replay/latest', (req, res) => {
-  const latest = [...session.recordings].reverse().find((r) => r.url);
+  // Prefer a recording whose audio actually landed on disk, but fall back to the most recent
+  // one either way: the page turns and highlights are ours and replay fine on their own, so a
+  // slow upload or a failed download degrades the keepsake instead of breaking it.
+  const withAudio = [...session.recordings].reverse().find((r) => r.url);
+  const latest = withAudio || session.recordings[session.recordings.length - 1];
   if (!latest) return res.status(404).json({ error: 'no recording yet' });
   const startTime = Date.parse(latest.start) || (latest.events[0]?.t ?? Date.now());
-  res.json({ audioUrl: latest.url, startTime, events: latest.events });
+  res.json({ audioUrl: latest.url || null, startTime, events: latest.events });
 });
 app.get('/api/recordings', (req, res) =>
   res.json(session.recordings.map(({ events, ...r }) => ({ ...r, events: events.length })))

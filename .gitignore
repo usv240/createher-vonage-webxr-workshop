@@ -141,3 +141,7 @@ private.key
 
 # story recordings (keepsakes stay local)
 recordings/
+
+# layout-test screenshots (regenerated on every run)
+expanded.png
+compact.png

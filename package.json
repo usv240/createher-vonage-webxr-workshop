@@ -1,15 +1,28 @@
 {
-  "name": "sample-voice-node-learning_server",
+  "name": "once-upon-a-call",
   "private": true,
   "scripts": {
-    "start": "node index.js"
+    "start": "node index.js",
+    "test": "node test/preview.test.js",
+    "test:layout": "node test/layout.test.js http://localhost:3210/",
+    "fixture": "node test/serve-fixture.js 3210",
+    "test:pages": "node test/pages.test.js http://localhost:3210",
+    "test:browser": "node test/layout.test.js http://localhost:3210/ && node test/pages.test.js http://localhost:3210"
   },
   "dependencies": {
+    "@vonage/jwt": "^1.12.1",
+    "@vonage/messages": "^1.22.1",
     "@vonage/server-sdk": "^3.25.1",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "express": "^5.0.0",
     "socket.io": "^4.8.3",
     "ws": "^8.21.3"
-  }
+  },
+  "devDependencies": {
+    "puppeteer-core": "^25.10.0"
+  },
+  "version": "1.0.0",
+  "description": "A live AR bedtime story, read over any phone. Built with the Vonage Voice API and XR Blocks.",
+  "license": "MIT"
 }

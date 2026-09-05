@@ -117,3 +117,22 @@ export class ReadingTracker {
 function norm(w) {
   return String(w).toLowerCase().replace(/[^a-z0-9']/g, '');
 }
+
+// How many words of `text` have been spoken once the synthesiser reaches `charIndex`.
+//
+// SpeechSynthesisUtterance boundary events report a character offset, not a word number, and
+// browsers disagree about whether that offset lands on the space before a word or its first
+// letter. Counting the words that *start* at or before the offset is stable across both.
+// Used by the preview tour; the live call path uses ReadingTracker instead.
+export function wordIndexAtChar(text, charIndex) {
+  const src = String(text ?? '');
+  const at = Math.max(0, Math.min(Number(charIndex) || 0, src.length));
+  let count = 0;
+  const re = /\S+/g;
+  let m;
+  while ((m = re.exec(src)) !== null) {
+    if (m.index <= at) count++;
+    else break;
+  }
+  return count;
+}

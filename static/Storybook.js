@@ -89,8 +89,11 @@ export class Storybook extends THREE.Group {
 
   // Live caption of what the parent just said (accessibility for hard-of-hearing children)
   setCaption(text) {
-    this.caption = String(text || '').slice(-90);
-    this.draw();
+    const next = String(text || '').slice(-90);
+    if (next === this.caption) return;
+    this.caption = next;
+    // No draw() here on purpose: interim speech results arrive several times a second and
+    // update() already repaints at ~12fps, which is smooth enough to read.
   }
 
   update(dt) {
